@@ -112,6 +112,7 @@ func (s *DelayQueue[T]) Dequeue(ctx context.Context) (T, bool) {
 			}
 		} else if delay >= minTimerDelay {
 			// 等待时间到期或新元素加入
+			// todo: 释放定时器
 			timer := time.NewTimer(delay)
 			select {
 			case <-timer.C:
@@ -188,6 +189,7 @@ func (s *DelayQueue[T]) Enqueue(ctx context.Context, val T) bool {
 
 		if delay := val.GetDeadline().Sub(time.Now()); delay >= minTimerDelay {
 			// 新元素需要延迟，等待退出信号、出队信号和到期信号
+			// todo: 释放定时器
 			timer := time.NewTimer(delay)
 			select {
 			case <-timer.C:
