@@ -65,6 +65,9 @@
                         placeholder="请确保数据库实例信息填写完整后获取库名"
                         style="width: 100%"
                     >
+                        <template #header>
+                            <el-checkbox v-model="checkAllDbNames" :indeterminate="indeterminateDbNames" @change="handleCheckAll"> 全选 </el-checkbox>
+                        </template>
                         <el-option v-for="db in allDatabases" :key="db" :label="db" :value="db" />
                     </el-select>
                 </el-form-item>
@@ -90,6 +93,7 @@ import { dbApi } from './api';
 import { ElMessage } from 'element-plus';
 import TagTreeSelect from '../component/TagTreeSelect.vue';
 import { TagResourceTypeEnum } from '@/common/commonEnum';
+import type { CheckboxValueType } from 'element-plus';
 
 const props = defineProps({
     visible: {
@@ -138,6 +142,9 @@ const rules = {
         },
     ],
 };
+
+const checkAllDbNames = ref(false);
+const indeterminateDbNames = ref(false);
 
 const dbForm: any = ref(null);
 const tagSelectRef: any = ref(null);
@@ -241,6 +248,30 @@ const cancel = () => {
     setTimeout(() => {
         resetInputDb();
     }, 500);
+};
+
+watch(databaseList, (val) => {
+    if (val.length === 0) {
+        state.form.database = '';
+        checkAllDbNames.value = false;
+        indeterminateDbNames.value = false;
+        return;
+    }
+    state.form.database = val.join(' ');
+    if (val.length === state.allDatabases.length) {
+        checkAllDbNames.value = true;
+        indeterminateDbNames.value = false;
+        return;
+    }
+    indeterminateDbNames.value = true;
+});
+
+const handleCheckAll = (val: CheckboxValueType) => {
+    if (val) {
+        state.databaseList = state.allDatabases.map((dbName: String) => dbName);
+    } else {
+        state.databaseList = [];
+    }
 };
 </script>
 <style lang="scss"></style>

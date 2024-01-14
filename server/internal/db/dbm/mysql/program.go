@@ -16,8 +16,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"golang.org/x/sync/singleflight"
-
 	"mayfly-go/internal/db/config"
 	"mayfly-go/internal/db/dbm/dbi"
 	"mayfly-go/internal/db/domain/entity"
@@ -227,36 +225,8 @@ func (svc *DbProgramMysql) parseLocalBinlogFirstEventTime(ctx context.Context, f
 	return time.Time{}, errors.New("解析 binlog 文件失败")
 }
 
-var singleFlightGroup singleflight.Group
-
 // FetchBinlogs downloads binlog files from startingFileName on server to `binlogDir`.
 func (svc *DbProgramMysql) FetchBinlogs(ctx context.Context, downloadLatestBinlogFile bool, earliestBackupSequence, latestBinlogSequence int64) ([]*entity.BinlogFile, error) {
-	var downloaded bool
-	key := strconv.FormatUint(svc.dbInfo().InstanceId, 16)
-	binlogFiles, err, _ := singleFlightGroup.Do(key, func() (interface{}, error) {
-		downloaded = true
-		return svc.fetchBinlogs(ctx, downloadLatestBinlogFile, earliestBackupSequence, latestBinlogSequence)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if downloaded {
-		return binlogFiles.([]*entity.BinlogFile), nil
-	}
-	if !downloadLatestBinlogFile {
-		return nil, nil
-	}
-	binlogFiles, err, _ = singleFlightGroup.Do(key, func() (interface{}, error) {
-		return svc.fetchBinlogs(ctx, true, earliestBackupSequence, latestBinlogSequence)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return binlogFiles.([]*entity.BinlogFile), err
-}
-
-// fetchBinlogs downloads binlog files from startingFileName on server to `binlogDir`.
-func (svc *DbProgramMysql) fetchBinlogs(ctx context.Context, downloadLatestBinlogFile bool, earliestBackupSequence, latestBinlogSequence int64) ([]*entity.BinlogFile, error) {
 	// Read binlog files list on server.
 	binlogFilesOnServerSorted, err := svc.GetSortedBinlogFilesOnServer(ctx)
 	if err != nil {

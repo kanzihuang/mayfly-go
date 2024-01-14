@@ -25,6 +25,35 @@ type Delayable interface {
 	GetKey() string
 }
 
+var _ Delayable = (*wrapper[Job])(nil)
+
+type wrapper[T Job] struct {
+	key      string
+	deadline time.Time
+	removed  bool
+	status   JobStatus
+	job      T
+}
+
+func newWrapper[T Job](job T) *wrapper[T] {
+	return &wrapper[T]{
+		key: job.GetKey(),
+		job: job,
+	}
+}
+
+func (d *wrapper[T]) GetDeadline() time.Time {
+	return d.deadline
+}
+
+func (d *wrapper[T]) GetKey() string {
+	return d.key
+}
+
+func (d *wrapper[T]) Payload() T {
+	return d.job
+}
+
 func NewDelayQueue[T Delayable](cap int) *DelayQueue[T] {
 	singleDequeue := make(chan struct{}, 1)
 	singleDequeue <- struct{}{}
@@ -112,7 +141,6 @@ func (s *DelayQueue[T]) Dequeue(ctx context.Context) (T, bool) {
 			}
 		} else if delay >= minTimerDelay {
 			// 等待时间到期或新元素加入
-			// todo: 释放定时器
 			timer := time.NewTimer(delay)
 			select {
 			case <-timer.C:
@@ -189,7 +217,6 @@ func (s *DelayQueue[T]) Enqueue(ctx context.Context, val T) bool {
 
 		if delay := val.GetDeadline().Sub(time.Now()); delay >= minTimerDelay {
 			// 新元素需要延迟，等待退出信号、出队信号和到期信号
-			// todo: 释放定时器
 			timer := time.NewTimer(delay)
 			select {
 			case <-timer.C:
