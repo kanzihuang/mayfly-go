@@ -185,6 +185,12 @@ func (svc *DbProgramMysql) downloadBinlogFilesOnServer(ctx context.Context, binl
 }
 
 // Parse the first binlog eventTs of a local binlog file.
+func (svc *DbProgramMysql) parseLocalBinlogLastEventTime(ctx context.Context, filePath string) (eventTime time.Time, parseErr error) {
+	// todo: implement me
+	return time.Now(), nil
+}
+
+// Parse the first binlog eventTs of a local binlog file.
 func (svc *DbProgramMysql) parseLocalBinlogFirstEventTime(ctx context.Context, filePath string) (eventTime time.Time, parseErr error) {
 	args := []string{
 		// Local binlog file path.
@@ -322,7 +328,13 @@ func (svc *DbProgramMysql) downloadBinlogFile(ctx context.Context, binlogFileToD
 	if err != nil {
 		return err
 	}
+	lastEventTime, err := svc.parseLocalBinlogLastEventTime(ctx, binlogFilePath)
+	if err != nil {
+		return err
+	}
+
 	binlogFileToDownload.FirstEventTime = firstEventTime
+	binlogFileToDownload.LastEventTime = lastEventTime
 	binlogFileToDownload.Downloaded = true
 
 	return nil

@@ -17,6 +17,7 @@ type BinlogFile struct {
 	// Sequence is parsed from Name and is for the sorting purpose.
 	Sequence       int64
 	FirstEventTime time.Time
+	LastEventTime  time.Time
 	Downloaded     bool
 }
 

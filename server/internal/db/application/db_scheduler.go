@@ -28,6 +28,7 @@ type dbScheduler struct {
 	restoreHistoryRepo repository.DbRestoreHistory
 	binlogRepo         repository.DbBinlog
 	binlogHistoryRepo  repository.DbBinlogHistory
+	binlogTimes        map[uint64]time.Time
 }
 
 func newDbScheduler(repositories *repository.Repositories) (*dbScheduler, error) {
