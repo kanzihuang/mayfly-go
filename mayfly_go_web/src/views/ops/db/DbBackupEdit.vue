@@ -110,8 +110,8 @@ const state = reactive({
     dbNamesSelected: [] as any,
     dbNamesWithoutBackup: [] as any,
     dbNamesFiltered: [] as any,
-    editOrCreate: false,
     filterString: '',
+    editOrCreate: false,
 });
 
 const { dbNamesSelected, dbNamesWithoutBackup } = toRefs(state);
@@ -184,12 +184,11 @@ const cancel = () => {
     emit('cancel');
 };
 
-const checkSelect = (val: string[]) => {
+const checkDbSelect = (val: string[]) => {
     const selected = val.filter((dbName: string) => {
         return dbName.includes(state.filterString);
     });
     if (selected.length === 0) {
-        state.form.dbNames = '';
         checkAllDbNames.value = false;
         indeterminateDbNames.value = false;
         return;
@@ -203,7 +202,7 @@ const checkSelect = (val: string[]) => {
 };
 
 watch(dbNamesSelected, (val: string[]) => {
-    checkSelect(val);
+    checkDbSelect(val);
     state.form.dbNames = val.join(' ');
 });
 
@@ -216,7 +215,7 @@ const handleCheckAll = (val: CheckboxValueType) => {
         return !state.dbNamesFiltered.includes(dbName);
     });
     if (val) {
-        state.dbNamesSelected = selected.concat(state.dbNamesFiltered.map((dbName: string) => dbName));
+        state.dbNamesSelected = selected.concat(state.dbNamesFiltered);
     } else {
         state.dbNamesSelected = selected;
     }
@@ -227,7 +226,7 @@ const filterDbNames = (filterString: string) => {
         return dbName.includes(filterString);
     });
     state.filterString = filterString;
-    checkSelect(state.dbNamesSelected);
+    checkDbSelect(state.dbNamesSelected);
 };
 </script>
 <style lang="scss"></style>
